@@ -10,8 +10,8 @@ First, open the app and login/sign up. The authentication and user creation is h
 ## What's next?
 As fChat continues to grow, there are a couple of things that I would like to add:
  - Optional Passwords for Chats:
- Users will be able to password protect their chats so that people cannot join unexpectedly
- - Unique display names and tagging others
- Users will be able to tag each other directly based on their unique display names.
+ users will be able to password protect their chats so that people cannot join unexpectedly
+ - Unique display names and tagging others:
+ users will be able to tag each other directly based on their unique display names.
 
-fChat was developed for the ICS4UI summative project, using Android Studio
+fChat was developed for the ICS4UI summative project, using Android Studio.
