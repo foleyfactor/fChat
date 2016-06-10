@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "167876926142",
+    "firebase_url": "https://fchat-a344a.firebaseio.com",
+    "project_id": "fchat-a344a",
+    "storage_bucket": "fchat-a344a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167876926142:android:896d7d66b2efe901",
+        "android_client_info": {
+          "package_name": "com.foley.alex.fchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "167876926142-n9854ii098h8haj7f7qs00h920p86h6t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvpRB4-uIq8CRBtTCdj4lk3Uc3vdlWgrc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

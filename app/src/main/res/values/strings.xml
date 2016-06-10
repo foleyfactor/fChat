@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">fChat</string>
+    <string name="logout">Logout</string>
+    <string name="email">Email Address</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="signup">Sign up!</string>
+    <string name="signuptext">Sign up</string>
+    <string name="login">Login!</string>
+    <string name="logintext">Login</string>
+    <string name="no_chats">Looks like you don\'t have any chats. Click the button below to join/create one!</string>
+    <string name="join_chat">Join chat!</string>
+    <string name="join_chat_text">Join a chat</string>
+    <string name="chat_id">Chat ID</string>
+    <string name="chat_title">Chat Title</string>
+    <string name="create_chat">Create chat!</string>
+    <string name="create_chat_text">Create chat</string>
+    <string name="type_message">Type message...</string>
+    <string name="send">SEND</string>
+</resources>
