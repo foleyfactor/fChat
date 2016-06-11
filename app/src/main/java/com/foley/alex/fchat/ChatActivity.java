@@ -86,9 +86,9 @@ public class ChatActivity extends AppCompatActivity {
 
     public void leaveChat() {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/"
-                + FirebaseAuth.getInstance().getCurrentUser().getUid()
+                + FirebaseAuth.getInstance().getCurrentUser().getUid() + "/"
                 + chat.getChatId());
-
+        Log.e(TAG, ref.toString());
         ref.removeValue();
     }
 

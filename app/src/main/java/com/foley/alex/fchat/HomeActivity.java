@@ -1,5 +1,6 @@
 package com.foley.alex.fchat;
 
+//Imports
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -48,35 +49,49 @@ import java.util.HashMap;
 import java.util.PropertyResourceBundle;
 import java.util.prefs.Preferences;
 
+//Class declaration
 public class HomeActivity extends AppCompatActivity {
 
+    //Constant class variables
     private static final String TAG = "HomeActivity";
     private static final String PREFS_NAME = "fChatPrefs";
 
+    //Class variables
     private FirebaseUser user;
     private boolean loginShowing = false;
 
     //Method called on the creation of the activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //Call the superclass's on create method (resumes the app if necessary)
         super.onCreate(savedInstanceState);
+
+        //Set the current view to be the activity home layout
         setContentView(R.layout.activity_home);
+
+        //Initialize the toolbar and set it as the action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Boolean to see if the user has been away from the app for more than 5 minutes
         boolean deltaTime = (new Date().getTime()) - getLastTime() > 300000f;
 
+        //Check if the user is currently logged in
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            //If they aren't, show the login dialog
             showLoginDialog();
         } else {
+            //If they are, but have been away for too long, log them out and show the dialog
             if (deltaTime) {
                logOutAndShowDialog();
+            //Otherwise, set the user and load the chats
             } else {
                 user = FirebaseAuth.getInstance().getCurrentUser();
                 loadChats();
             }
         }
 
+        //Initialize the floating action button (+ button) and set its function
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,11 +105,14 @@ public class HomeActivity extends AppCompatActivity {
     //background and then resumed)
     @Override
     protected void onRestart() {
+        //Call the superclass's onRestart method
         super.onRestart();
 
+        //If the user is no longer logged in, show the login dialog
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             showLoginDialog();
         } else {
+        //Otherwise, set the user and load the chats
             user = FirebaseAuth.getInstance().getCurrentUser();
             loadChats();
         }
@@ -103,19 +121,27 @@ public class HomeActivity extends AppCompatActivity {
     //Method called when the app is stopped
     @Override
     protected void onStop() {
+        //Call the superclass's onStop method
         super.onStop();
 
+        //Update the last time the app was used
         setLastTime();
     }
 
     //Method for adding a user to a specified chat
     public void addUserToChat(String c) {
+        //Get the database reference for the specified chat
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/" + user.getUid());
+
+        //Show the spinner while we wait for the request
         final ProgressDialog wait = makeLoadingSpinner("Joining chat: " + c, "Just a moment.");
         wait.show();
+
+        //Add the chat's id to the user's set of chats
         ref.child(c).setValue("").addOnCompleteListener(this, new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
+                //When this is done, cancel the spinner and load the chats
                 wait.cancel();
                 loadChats();
             }
@@ -124,16 +150,25 @@ public class HomeActivity extends AppCompatActivity {
 
     //Function returning the last time that the application was active
     public long getLastTime() {
+        //Access the app's local storage
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+
+        //Return the value set for time, or 0 if it doesn't exist
         return prefs.getLong("time", 0);
     }
 
     //Method for setting the last time that the app was active
     public void setLastTime() {
+        //Access the app's local storage
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+
+        //Create a local storage editor
         SharedPreferences.Editor editor = prefs.edit();
+
+        //Set the value of time to the current time
         editor.putLong("time", new Date().getTime());
 
+        //Commit the changes to the storage
         editor.commit();
     }
 
@@ -149,61 +184,104 @@ public class HomeActivity extends AppCompatActivity {
 
     //Method for transitioning to a chat's activity
     public void toChat(String chatId) {
+        //Create a new intent, pointing to the ChatActivity class
         Intent intent = new Intent(this, ChatActivity.class);
+
+        //Add the chat's id as an extra piece of data
         intent.putExtra("chat", chatId);
+
+        //Start the new activity, using the intent
         startActivity(intent);
     }
 
     //Method for loading all of the chats that a user is a part of
     public void loadChats() {
+        //Get the unique id of the current user
         String uid = user.getUid();
+
+        //Get a reference to the current user's info in the database
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/" + uid);
+
+        //Create and show a loading spinner while we wait for the chats to load
         final ProgressDialog loading = makeLoadingSpinner("Loading chats", "This will just take a moment.");
         loading.show();
+
+        //Check the database once
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.e(TAG, "Data changed.");
+                //Set the chats scrolling view to the one in the activity
                 ScrollView chats = (ScrollView) getActivity().findViewById(R.id.chats);
+
+                //If there are no children (chats) for the current user, add some text telling them
+                //to join one
                 if (!dataSnapshot.hasChildren()) {
+                    //Create a new TextView
                     TextView noChats = new TextView(getActivity());
+
+                    //Set the text to the no chats string
                     noChats.setText(R.string.no_chats);
+
+                    //Set the text's size to 20
                     noChats.setTextSize(20);
+
+                    //Set the gravity (alignment) to center.
                     noChats.setGravity(Gravity.CENTER);
 
+                    //Remove the current views in the scroll view and add the one we've created
                     chats.removeAllViews();
                     chats.addView(noChats);
+
+                //Otherwise, the user is in chats
                 } else {
+                    //Create a LinearLayout for all of the chat blurbs
                     final LinearLayout layout = new LinearLayout(chats.getContext());
+
+                    //Set the orientation to be vertical
                     layout.setOrientation(LinearLayout.VERTICAL);
 
+                    //Create a new iterable from the user's children (the list of chats they're
+                    //involved in)
                     Iterable<DataSnapshot> chatList = dataSnapshot.getChildren();
 
+                    //Loop through the list of chats the user is involved in
                     for (DataSnapshot d : chatList) {
+
+                        //Get the chat id from the snapshot
                         final String chatId = d.getKey();
+
+                        //Create a database reference for the chats section of the database
                         DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference("chats");
+
+                        //Access the chat reference's child corresponding to the current chat once
                         chatRef.child(chatId).addListenerForSingleValueEvent(
                                 new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
+                                        //Get the data as a Chat object
                                         Chat c = dataSnapshot.getValue(Chat.class);
+
+                                        //Draw the chat's blurb on the layout
                                         c.drawChatBlurb(layout, getHomeActivity(), chatId);
                                     }
 
                                     @Override
                                     public void onCancelled(DatabaseError databaseError) {
+                                        //Log the error for debugging
                                         Log.e(TAG, "LoadChats: ChatBlurb: error");
                                     }
                                 }
                         );
                     }
-
+                    //Remove all of the views in the scrolling view and add the one with the chat blurbs
                     chats.removeAllViews();
                     chats.addView(layout);
                 }
+                //Cancel the loading dialog
                 loading.cancel();
             }
 
+            //Log the error for debugging
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.e(TAG, "LoadChats:error");
@@ -211,12 +289,19 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    //Function for creating a loading spinner (waiting for async)
+    //Function for creating a loading spinner (while waiting for async calls)
     public ProgressDialog makeLoadingSpinner(CharSequence t, CharSequence m) {
+        //Create a new ProgressDialog (spinner) object on the current activity
         ProgressDialog loading = new ProgressDialog(this);
+
+        //Set the title and message based on the arguments
         loading.setTitle(t);
         loading.setMessage(m);
+
+        //Don't allow the user to cancel it
         loading.setCancelable(false);
+
+        //Return the spinner
         return loading;
     }
 
@@ -243,7 +328,6 @@ public class HomeActivity extends AppCompatActivity {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
                                             wait.cancel();
-                                            //c.sendMessage(new Message("Created chat", user.getDisplayName(), new Date().getTime(), user.getUid()));
                                             addUserToChat(chatId);
                                         }
                                     });
