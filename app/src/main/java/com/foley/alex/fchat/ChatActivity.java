@@ -5,7 +5,10 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -30,6 +33,10 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent intent = getIntent();
         String chatId = intent.getStringExtra("chat");
@@ -75,5 +82,31 @@ public class ChatActivity extends AppCompatActivity {
         loading.setMessage(m);
         loading.setCancelable(false);
         return loading;
+    }
+
+    public void leaveChat() {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/"
+                + FirebaseAuth.getInstance().getCurrentUser().getUid()
+                + chat.getChatId());
+
+        ref.removeValue();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_chat, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.leave_chat) {
+            leaveChat();
+            super.onBackPressed();
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }

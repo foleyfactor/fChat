@@ -17,4 +17,5 @@
     <string name="create_chat_text">Create chat</string>
     <string name="type_message">Type message...</string>
     <string name="send">SEND</string>
+    <string name="leave_chat">Leave Chat</string>
 </resources>

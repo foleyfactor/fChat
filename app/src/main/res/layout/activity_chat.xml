@@ -1,45 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:orientation="vertical"
-    tools:context="com.foley.alex.fchat.ChatActivity">
+    android:fitsSystemWindows="true"
+    tools:context="com.foley.alex.fchat.HomeActivity">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="0.75"
-        android:id="@+id/messages">
-
-    </ScrollView>
-
-    <LinearLayout
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/user_input"
-        android:orientation="horizontal">
+        android:theme="@style/AppTheme.AppBarOverlay">
 
-        <EditText
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="0.8"
-            android:id="@+id/message_field"
-            android:inputType="textCapSentences"
-            android:hint="@string/type_message"/>
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
 
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:text="@string/send"
-            android:layout_weight="0.2"
-            android:onClick="sendMessage"
-            android:id="@+id/send_button"/>
+    </android.support.design.widget.AppBarLayout>
 
-    </LinearLayout>
+    <include layout="@layout/content_chat" />
 
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>
