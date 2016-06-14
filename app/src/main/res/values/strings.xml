@@ -1,3 +1,4 @@
+<!--String resources for the app: makes things easier to change in an app-wide setting-->
 <resources>
     <string name="app_name">fChat</string>
     <string name="logout">Logout</string>

@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+      Layout for the joining chat dialog
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
+    <!--Displays the fChat title-->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -10,6 +14,7 @@
         android:textSize="28sp"
         android:gravity="center"/>
 
+    <!--Subheading that says "join chat"-->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,6 +22,7 @@
         android:text="@string/join_chat_text"
         android:gravity="center"/>
 
+    <!--Text input for the chat id that the user can join-->
     <EditText
         android:id="@+id/chat_id"
         android:layout_width="match_parent"
@@ -27,7 +33,5 @@
         android:layout_marginBottom="4dp"
         android:layout_marginTop="16dp"
         android:layout_marginRight="4dp"/>
-
-
 
 </LinearLayout>

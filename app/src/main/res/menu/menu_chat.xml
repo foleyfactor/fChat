@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+      Menu resource for the ChatActivity's menu
+-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".ChatActivity">
 
+    <!--Leave chat option-->
     <item
         android:id="@+id/leave_chat"
         android:title="@string/leave_chat"
         app:showAsAction="never"
         android:orderInCategory="50"
         />
-
-    <!--<item-->
-        <!--android:id="@+id/logout_option"-->
-        <!--android:title="@string/logout"-->
-        <!--app:showAsAction="never"-->
-        <!--android:orderInCategory="100"-->
-        <!--/>-->
 
 </menu>

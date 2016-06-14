@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+      Layout for the content of the home screen of the app
+-->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,6 +15,7 @@
     tools:context="com.foley.alex.fchat.HomeActivity"
     tools:showIn="@layout/activity_home">
 
+    <!--Scrolling view for chat blurbs-->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

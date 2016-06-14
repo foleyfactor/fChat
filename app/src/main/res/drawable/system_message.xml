@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-      Resource for the user's messages
+      Resource for the system messages
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!--Shape fill-->
     <solid
-        android:color="@color/user_message" />
+        android:color="@color/system_message" />
 
-    <!--Specifies rounded corners-->
+    <!--Specifies the rounded corners-->
     <corners
         android:radius="3dp" />
 
     <!--Padding-->
     <padding
-        android:bottom="5dp"
         android:left="10dp"
         android:right="10dp"
-        android:top="5dp" />
+        android:top="5dp"
+        android:bottom="5dp" />
+
 </shape>

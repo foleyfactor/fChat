@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+      Layout for the content of the ChatActivity
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -15,6 +18,7 @@
     tools:context="com.foley.alex.fchat.ChatActivity"
     tools:showIn="@layout/activity_chat">
 
+    <!--Scrolling view for the chat messages-->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -24,12 +28,14 @@
 
     </ScrollView>
 
+    <!--Linear layout for the button and text field-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/user_input"
         android:orientation="horizontal">
 
+        <!--Message input field-->
         <EditText
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -38,6 +44,7 @@
             android:inputType="textCapSentences"
             android:hint="@string/type_message" />
 
+        <!--Send message button-->
         <Button
             android:layout_width="0dp"
             android:layout_height="match_parent"

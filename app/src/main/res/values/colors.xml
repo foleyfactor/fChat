@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--Color resources for the app - all color values can be found here-->
 <resources>
     <color name="colorPrimary">#444444</color>
     <color name="colorPrimaryDark">#000000</color>
     <color name="colorAccent">#999999</color>
     <color name="user_message">#00CC66</color>
     <color name="other_message">#CCCCCC</color>
+    <color name="system_message">#FF5566</color>
 </resources>
