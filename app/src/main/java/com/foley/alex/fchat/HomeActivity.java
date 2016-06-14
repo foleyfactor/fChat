@@ -58,7 +58,7 @@ public class HomeActivity extends AppCompatActivity {
 
     //Class variables
     private FirebaseUser user;
-    private boolean loginShowing = false;
+    private AlertDialog currLoginDialog;
 
     //Method called on the creation of the activity
     @Override
@@ -123,6 +123,9 @@ public class HomeActivity extends AppCompatActivity {
     protected void onStop() {
         //Call the superclass's onStop method
         super.onStop();
+
+        //Cancel any showing dialogs
+        if (currLoginDialog != null) currLoginDialog.cancel();
 
         //Update the last time the app was used
         setLastTime();
@@ -507,8 +510,8 @@ public class HomeActivity extends AppCompatActivity {
         //Inflate a view using the inflater and the layout for the login dialog
         final View dialogView = inflater.inflate(R.layout.login_dialog, null);
 
-        //Set the view of the dialog to be the one that we inflated
-        builder.setView(dialogView)
+        //Set the view of the dialog to be the one that we inflated; set it to be the current dialog
+        currLoginDialog = builder.setView(dialogView)
                 //Don't allow the user to cancel this dialog
                 .setCancelable(false)
                 //Create a positive (Login) button with a click listener
@@ -564,9 +567,10 @@ public class HomeActivity extends AppCompatActivity {
                         dialog.cancel();
                         showSignUpDialog();
                     }
-                });
-        //Create and show the dialog
-        builder.create().show();
+                })
+                //Create and show the dialog
+                .create();
+        currLoginDialog.show();
     }
 
     //Method for showing the dialog prompting the user to sign up
@@ -580,8 +584,8 @@ public class HomeActivity extends AppCompatActivity {
         //Inflate a view with the layout for sign up dialogs
         final View dialogView = inflater.inflate(R.layout.sign_up_dialog, null);
 
-        //Set the view of the builder to be the one we inflated
-        builder.setView(dialogView)
+        //Set the view of the builder to be the one we inflated; set it to be the current dialog
+        currLoginDialog = builder.setView(dialogView)
                 //Don't let the user cancel this dialog
                 .setCancelable(false)
                 //Create a positive (Sign Up) button with a click listener
@@ -647,9 +651,10 @@ public class HomeActivity extends AppCompatActivity {
                         dialog.cancel();
                         showLoginDialog();
                     }
-                });
-        //Create and show the dialog
-        builder.create().show();
+                })
+                //Create and show the dialog
+                .create();
+        currLoginDialog.show();
     }
 
     //Method that creates the action bar's option menu

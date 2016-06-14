@@ -44,10 +44,6 @@ public class Message {
 
     public String getUid() { return this.uid; }
 
-    public long getTimestamp() {
-        return this.timestamp;
-    }
-
     //Returns the layout corresponding to the message, with spacing and background
     public LinearLayout formatMessage(Context c) {
         boolean sentByUser = this.uid.equals(FirebaseAuth.getInstance().getCurrentUser().getUid());
