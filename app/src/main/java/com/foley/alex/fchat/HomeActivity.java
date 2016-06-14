@@ -131,19 +131,50 @@ public class HomeActivity extends AppCompatActivity {
     //Method for adding a user to a specified chat
     public void addUserToChat(String c) {
         //Get the database reference for the specified chat
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users/" + user.getUid());
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users/" + user.getUid());
+        final DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference("chats/" + c);
 
         //Show the spinner while we wait for the request
         final ProgressDialog wait = makeLoadingSpinner("Joining chat: " + c, "Just a moment.");
         wait.show();
 
         //Add the chat's id to the user's set of chats
-        ref.child(c).setValue("").addOnCompleteListener(this, new OnCompleteListener<Void>() {
+        userRef.child(c).setValue("").addOnCompleteListener(this, new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                //When this is done, cancel the spinner and load the chats
-                wait.cancel();
-                loadChats();
+                //If the user is added successfully
+                if (task.isSuccessful()) {
+                    //Access the chats once
+                    chatRef.addListenerForSingleValueEvent(
+                            new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    //When the chat loads, send a message that we've joined
+                                    dataSnapshot.getValue(Chat.class)
+                                            .sendMessage(new Message(FirebaseAuth.getInstance().getCurrentUser().getDisplayName() + " has joined the chat.",
+                                                    "System", new Date().getTime(), "@system"));
+
+                                    //Then cancel the spinner and load the chats
+                                    wait.cancel();
+                                    loadChats();
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+                                    //Log the error so I can troubleshoot it, then cancel the spinner
+                                    Log.e(TAG, "AddUser: ChatRef Error");
+                                    wait.cancel();
+                                }
+                            }
+                    );
+                } else {
+                    //Otherwise, cancel the spinner and notify the user
+                    wait.cancel();
+                    Toast.makeText(getApplicationContext(), "Error while joining chat. Try again later.", Toast.LENGTH_SHORT)
+                            .show();
+                    //Note: toasting is a way to alert the user of information, it
+                    //creates the little pop-up blurb on the screen
+                }
             }
         });
     }
@@ -284,7 +315,9 @@ public class HomeActivity extends AppCompatActivity {
             //Log the error for debugging
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "LoadChats:error");
+                //Log the error so I can troubleshoot and cancel the spinner
+                Log.e(TAG, "LoadChats: error");
+                loading.cancel();
             }
         });
     }
@@ -307,201 +340,322 @@ public class HomeActivity extends AppCompatActivity {
 
     //Method for showing the dialog prompting a user to create a chat
     public void showCreateChatDialog() {
+        //Create a new builder to make a dialog on this activity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        //Get the layout inflater for this activity so that we can inflate a view
         LayoutInflater inflater = this.getLayoutInflater();
+
+        //Inflate a view with the layout for the creating chat dialog
         final View dialogView = inflater.inflate(R.layout.create_chat_dialog, null);
+
+        //Set the view to the one inflated from the layout
         builder.setView(dialogView)
+                //Create the positive button with a click listener
                 .setPositiveButton(R.string.create_chat, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        //Set the chat title and id based on the fields on the dialog
                         final String chatTitle = ((TextView) dialogView.findViewById(R.id.chat_title)).getText().toString();
                         final String chatId = ((TextView) dialogView.findViewById(R.id.chat_id)).getText().toString().toLowerCase();
-                        final ProgressDialog wait = makeLoadingSpinner("Creating chat", "Preparing your chat from scratch");
+
+                        //Don't do anything if either field is blank
+                        if (chatId.isEmpty() || chatTitle.isEmpty()) {
+                            dialog.cancel();
+                            return;
+                        }
+
+                        //Create and show a loading spinner
+                        final ProgressDialog wait = makeLoadingSpinner("Creating chat", "Preparing your chat from scratch...");
+                        wait.show();
+
+                        //Create a database reference corresponding to the chats section
                         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("chats");
+
+                        //Access the database once
                         ref.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (!dataSnapshot.hasChild(chatId)) {
-                                    //if the chat id doesn't exist, create one!
+
+                                    //If a chat with that id doesn't exist, create a chat!
                                     final Chat c = new Chat(chatId, chatTitle);
+
+                                    //Set the value in the database
                                     ref.child(chatId).setValue(c).addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
+                                            //When that's done, cancel the spinner and add the
+                                            //user to the chat
                                             wait.cancel();
                                             addUserToChat(chatId);
+
+                                            //Send a message letting everyone know that the user
+                                            //has joined the chat
+                                            c.sendMessage(new Message(FirebaseAuth.getInstance().getCurrentUser().getDisplayName() + " created the chat.",
+                                                    "System", new Date().getTime(), "@system"));
                                         }
                                     });
                                 } else {
+                                    //If a chat already exists, cancel the spinner and let the user
+                                    //know that there is already a chat
                                     wait.cancel();
+
                                     Toast.makeText(getApplicationContext(), "Error: a chat with that id already exists.", Toast.LENGTH_SHORT)
                                             .show();
+                                    //Note: toasting is a way to alert the user of information, it
+                                    //creates the little pop-up blurb on the screen
                                 }
                             }
 
                             @Override
                             public void onCancelled(DatabaseError databaseError) {
+                                //Cancel the spinner and log the error so that I can troubleshoot it
+                                wait.cancel();
                                 Log.e(TAG, "CreateChat: error");
                             }
                         });
                     }
                 })
+                //Create and show the dialog
                 .create().show();
     }
 
     //Method for showing the dialog prompting the user to join a chat
     public void showJoinChatDialog() {
+        //Create a new builder to make a dialog on this activity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        //Get the layout inflater so that we can inflate a view
         LayoutInflater inflater = this.getLayoutInflater();
+
+        //Inflate the join chat dialog layout into a new view for the dialog
         final View dialogView = inflater.inflate(R.layout.join_chat_dialog, null);
+
+        //Set the view to be the one we inflated
         builder.setView(dialogView)
+
+                //Create a positive (Join Chat) button with a click listener
                 .setPositiveButton(R.string.join_chat, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        //Get the chat id that the user input
                         final String chatId = ((TextView) dialogView.findViewById(R.id.chat_id)).getText().toString().toLowerCase();
+
+                        //If the user didn't enter anything, cancel the dialog and quit
+                        if (chatId.isEmpty()) {
+                            dialog.cancel();
+                            return;
+                        }
+
+                        //Create a new spinner for the user's waiting pleasure and show it
                         final ProgressDialog wait = makeLoadingSpinner("Looking for chat: " + chatId, "Please be patient.");
+                        wait.show();
+
+                        //Create a reference to the database in the chats section
                         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("chats");
+
+                        //Access the database once
                         ref.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
                                         if (!dataSnapshot.hasChild(chatId)) {
-                                            //if there doesn't exist a chat with that
-                                            //id, tell the user
+                                            //If there doesn't exist a chat with that
+                                            //id, tell the user and cancel the spinner
                                             Toast.makeText(getApplicationContext(), "Error: no chat found.", Toast.LENGTH_SHORT)
                                                     .show();
+
+                                            wait.cancel();
                                         } else {
+                                            //Otherwise, add the user to the chat and cancel the
+                                            //spinner
                                             addUserToChat(chatId);
+                                            wait.cancel();
                                         }
                                     }
 
                                     @Override
                                     public void onCancelled(DatabaseError databaseError) {
+                                        //Log the error for troubleshooting and cancel the spinner
+                                        wait.cancel();
                                         Log.e(TAG, "JoinChat: error");
                                     }
                                 });
                     }
                 })
+                //Create a negative (Create Chat) button with a click listener
                 .setNegativeButton(R.string.create_chat, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        //Hide the current dialog and create a "Create Chat" dialog instead
                         dialog.cancel();
                         showCreateChatDialog();
                     }
                 })
+                //Create and show the dialog
                 .create().show();
     }
 
     //Method for showing the dialog prompting the user to login
     public void showLoginDialog() {
-        if (!loginShowing) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            LayoutInflater inflater = this.getLayoutInflater();
-            final View dialogView = inflater.inflate(R.layout.login_dialog, null);
-            builder.setView(dialogView)
-                    .setCancelable(false)
-                    .setPositiveButton(R.string.login, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            String email = ((EditText) dialogView.findViewById(R.id.email)).getText().toString();
-                            String password = ((EditText) dialogView.findViewById(R.id.pass)).getText().toString();
+        //Create a new builder so that we can create a dialog on this activity
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        //Get the layout inflater for this activity
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        //Inflate a view using the inflater and the layout for the login dialog
+        final View dialogView = inflater.inflate(R.layout.login_dialog, null);
+
+        //Set the view of the dialog to be the one that we inflated
+        builder.setView(dialogView)
+                //Don't allow the user to cancel this dialog
+                .setCancelable(false)
+                //Create a positive (Login) button with a click listener
+                .setPositiveButton(R.string.login, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //Get the email and password from the dialog
+                        String email = ((EditText) dialogView.findViewById(R.id.email)).getText().toString();
+                        String password = ((EditText) dialogView.findViewById(R.id.pass)).getText().toString();
+
+                        //If either email or password is blank, cancel this dialog and create
+                        //a new one for them (so they can fill it in properly)
+                        if (email.isEmpty() || password.isEmpty()) {
                             dialog.cancel();
-                            loginShowing = false;
-                            final ProgressDialog wait = makeLoadingSpinner("Logging in", "Please wait.");
-                            wait.show();
-                            try {
-                                FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password).addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<AuthResult> task) {
-                                        wait.cancel();
-                                        if (!task.isSuccessful()) {
-                                            showLoginDialog();
-                                        } else {
-                                            user = FirebaseAuth.getInstance().getCurrentUser();
-                                            loadChats();
-                                        }
-                                    }
-                                });
-                            } catch (IllegalArgumentException e) {
+                            showLoginDialog();
+                            return;
+                        }
+
+                        //Cancel the dialog
+                        dialog.cancel();
+
+                        //Create a spinner to let the user what's up and show it to them
+                        final ProgressDialog wait = makeLoadingSpinner("Logging in", "Please wait.");
+                        wait.show();
+
+                        //Sign them in using the email and password that they provided,
+                        //and listen for the event to finish
+                        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password).addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                //When the authorization is complete
+
+                                //Cancel the spinner
                                 wait.cancel();
-                                showLoginDialog();
+
+                                //If it wasn't successful, prompt for login again
+                                if (!task.isSuccessful()) {
+                                    showLoginDialog();
+                                //If it was successful, update the user and load the chats
+                                } else {
+                                    user = FirebaseAuth.getInstance().getCurrentUser();
+                                    loadChats();
+                                }
                             }
-                        }
-                    })
-                    .setNegativeButton(R.string.signup, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                            loginShowing = false;
-                            showSignUpDialog();
-                        }
-                    });
-            loginShowing = true;
-            builder.create().show();
-        }
+                        });
+                    }
+                })
+                //Create a negative (Sign Up) button with a click listener
+                .setNegativeButton(R.string.signup, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //Cancel the current dialog and show the sign up dialog
+                        dialog.cancel();
+                        showSignUpDialog();
+                    }
+                });
+        //Create and show the dialog
+        builder.create().show();
     }
 
     //Method for showing the dialog prompting the user to sign up
     public void showSignUpDialog() {
-        if (!loginShowing) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            LayoutInflater inflater = this.getLayoutInflater();
-            final View dialogView = inflater.inflate(R.layout.sign_up_dialog, null);
-            builder.setView(dialogView)
-                    .setCancelable(false)
-                    .setPositiveButton(R.string.signup, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+        //Create a new builder so we can make a dialog on this activity
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        //Get the activity's inflater
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        //Inflate a view with the layout for sign up dialogs
+        final View dialogView = inflater.inflate(R.layout.sign_up_dialog, null);
+
+        //Set the view of the builder to be the one we inflated
+        builder.setView(dialogView)
+                //Don't let the user cancel this dialog
+                .setCancelable(false)
+                //Create a positive (Sign Up) button with a click listener
+                .setPositiveButton(R.string.signup, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //Cancel the current dialog
+                        dialog.cancel();
+
+                        //Get the username, password and email from the dialog
+                        final String username = ((EditText) dialogView.findViewById(R.id.user)).getText().toString();
+                        String email = ((EditText) dialogView.findViewById(R.id.email)).getText().toString();
+                        String password = ((EditText) dialogView.findViewById(R.id.pass)).getText().toString();
+
+                        //Re-prompt the user if the fields are empty
+                        if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
                             dialog.cancel();
-                            loginShowing = false;
-                            final String username = ((EditText) dialogView.findViewById(R.id.user)).getText().toString();
-                            String email = ((EditText) dialogView.findViewById(R.id.email)).getText().toString();
-                            String password = ((EditText) dialogView.findViewById(R.id.pass)).getText().toString();
-                            final ProgressDialog wait = makeLoadingSpinner("Signing up", "Just a moment.");
-                            wait.show();
-                            try {
-                                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<AuthResult> task) {
-                                        if (!task.isSuccessful()) {
+                            showSignUpDialog();
+                            return;
+                        }
+
+                        //Create and show a waiting spinner for the user
+                        final ProgressDialog wait = makeLoadingSpinner("Signing up", "Just a moment.");
+                        wait.show();
+
+                        //Create a new user with the user's info
+                        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                //If something went wrong, cancel the spinner and make another
+                                //dialog
+                                if (!task.isSuccessful()) {
+                                    wait.cancel();
+                                    showSignUpDialog();
+                                } else {
+                                    //Assign the user to the created user
+                                    user = FirebaseAuth.getInstance().getCurrentUser();
+
+                                    //Make a profile change request to update the user's display
+                                    UserProfileChangeRequest profile = new UserProfileChangeRequest.Builder()
+                                            .setDisplayName(username)
+                                            .build();
+
+                                    //Update the user's profile and listen for completion
+                                    user.updateProfile(profile).addOnCompleteListener(getActivity(), new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            //Cancel the loading and load the chats
                                             wait.cancel();
-                                            showSignUpDialog();
-                                        } else {
-                                            user = FirebaseAuth.getInstance().getCurrentUser();
-                                            UserProfileChangeRequest profile = new UserProfileChangeRequest.Builder()
-                                                    .setDisplayName(username)
-                                                    .build();
-                                            user.updateProfile(profile).addOnCompleteListener(getActivity(), new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    wait.cancel();
-                                                    loadChats();
-                                                }
-                                            });
+                                            loadChats();
                                         }
-                                    }
-                                });
-                            } catch (IllegalArgumentException e) {
-                                wait.cancel();
-                                showSignUpDialog();
+                                    });
+                                }
                             }
-                        }
-                    })
-                    .setNegativeButton(R.string.login, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                            loginShowing = false;
-                            showLoginDialog();
-                        }
-                    });
-            loginShowing = true;
-            builder.create().show();
-        }
+                        });
+                    }
+                })
+                //Create a negative (Login) button with a click listener
+                .setNegativeButton(R.string.login, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //Cancel the dialog and prompt the user to login
+                        dialog.cancel();
+                        showLoginDialog();
+                    }
+                });
+        //Create and show the dialog
+        builder.create().show();
     }
 
     //Method that creates the action bar's option menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflates the menu; this adds items to the action bar
         getMenuInflater().inflate(R.menu.menu_home, menu);
         return true;
     }
@@ -509,23 +663,28 @@ public class HomeActivity extends AppCompatActivity {
     //Method called when an item on the action bar is clicked
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        // The action bar handles the back arrow click because parent activity is specified in the
+        // manifest.xml file
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        //If they select logout, log out and show the dialog
         if (id == R.id.logout_option) {
             logOutAndShowDialog();
         }
 
+        //Call the super event on the item
         return super.onOptionsItemSelected(item);
     }
 
     //Method that logs the user out and shows them a dialog
     public void logOutAndShowDialog() {
+        //Remove all of the chat blurbs
         ((ScrollView) findViewById(R.id.chats)).removeAllViews();
+
+        //Sign out the auth instance
         FirebaseAuth.getInstance().signOut();
+
+        //Prompt the user to login
         showLoginDialog();
     }
 }
